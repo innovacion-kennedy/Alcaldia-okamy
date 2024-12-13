@@ -22,9 +22,62 @@ cd Alcaldia-okamy
 Configurar el entorno
 Docker
 
+    Guía de Instalación de Docker
+Linux (Ubuntu)
+
+    Actualizar el sistema:
+
+    sudo apt-get update
+    sudo apt-get upgrade
+
+    Instalar dependencias:
+
+    sudo apt-get install apt-transport-https ca-certificates curl software-properties-common
+
+    Agregar la clave GPG de Docker:
+
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+
+    Agregar el repositorio de Docker:
+
+    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+
     Instalar Docker:
-        Guía de instalación de Docker
-        Guía de instalación de Docker Compose
+
+    sudo apt-get update
+    sudo apt-get install docker-ce
+
+    Verificar la instalación:
+
+    sudo systemctl status docker
+
+Windows y macOS
+
+    Descargar Docker Desktop desde Docker Hub.
+    Ejecutar el instalador y seguir las instrucciones en pantalla.
+    Reiniciar el sistema si es necesario.
+    Verificar la instalación abriendo una terminal y ejecutando:
+
+    docker --version
+
+Guía de Instalación de Docker Compose
+Linux (Ubuntu)
+
+    Descargar la última versión de Docker Compose:
+
+    sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+
+    Aplicar permisos de ejecución:
+
+    sudo chmod +x /usr/local/bin/docker-compose
+
+    Verificar la instalación:
+
+    docker-compose --version
+
+Windows y macOS
+
+Docker Compose viene incluido con Docker Desktop, por lo que no necesitas instalarlo por separado. Solo asegúrate de que Docker Desktop esté instalado y actualizado.
 
     Configurar y levantar los servicios:
 
