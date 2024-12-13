@@ -1,0 +1,14 @@
+<!-- accounts/templates/accounts/item_list.html -->
+{% extends 'base.html' %}
+
+{% block title %}Item List{% endblock %}
+
+{% block content %}
+<h1>Item List</h1>
+<ul>
+    {% for item in items %}
+        <li><a href="{% url 'item_detail' item.pk %}">{{ item.name }}</a></li>
+    {% endfor %}
+</ul>
+<a href="{% url 'item_create' %}">Create new item</a>
+{% endblock %}

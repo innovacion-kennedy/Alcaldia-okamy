@@ -9,6 +9,8 @@ services:
       POSTGRES_PASSWORD: password
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - okamy_network
 
   web:
     build: .
@@ -19,6 +21,11 @@ services:
       - "8000:8000"
     depends_on:
       - db
+    networks:
+      - okamy_network
+
+networks:
+  okamy_network:
 
 volumes:
   postgres_data:
