@@ -1,0 +1,15 @@
+<!-- accounts/templates/accounts/item_detail.html -->
+{% extends 'base.html' %}
+
+{% block title %}Item Detail{% endblock %}
+
+{% block content %}
+<h1>{{ item.name }}</h1>
+<p>{{ item.description }}</p>
+<a href="{% url 'item_update' item.pk %}">Edit</a>
+<form action="{% url 'item_delete' item.pk %}" method="post">
+    {% csrf_token %}
+    <button type="submit">Delete</button>
+</form>
+<a href="{% url 'item_list' %}">Back to list</a>
+{% endblock %}
