@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Gestionar Funcionario{% endblock %}
+
+{% block content %}
+<h1>Gestionar Funcionario para {{ usuario.username }}</h1>
+
+{% if funcionario %}
+    <h3>Datos actuales del Funcionario</h3>
+    <p><strong>Nombre:</strong> {{ funcionario.nombre }}</p>
+    <p><strong>Cédula:</strong> {{ funcionario.cedula }}</p>
+    <p><strong>CPS:</strong> {{ funcionario.CPS }}</p>
+    <p><strong>Sitio de Expedición:</strong> {{ funcionario.sitio_expedicion }}</p>
+    <p><strong>Objeto:</strong> {{ funcionario.objeto }}</p>
+    <p><strong>Obligaciones:</strong> {{ funcionario.obligaciones }}</p>
+    <p><strong>Valor Inicial Contrato:</strong> {{ funcionario.vr_inicial_contrato }}</p>
+    <p><strong>Valor Mensual Honorarios:</strong> {{ funcionario.valor_mensual_honorarios }}</p>
+    <p><strong>Fecha Suscripción:</strong> {{ funcionario.fecha_suscripcion }}</p>
+    <p><strong>Fecha Inicio:</strong> {{ funcionario.fecha_inicio }}</p>
+    <p><strong>Fecha Terminación:</strong> {{ funcionario.fecha_terminacion }}</p>
+    <p><strong>Tiempo Ejecución:</strong> {{ funcionario.tiempo_ejecucion_dia }} días</p>
+    <p><strong>Año Contrato:</strong> {{ funcionario.año_contrato }}</p>
+    <p><strong>Radicado:</strong> {{ funcionario.radicado }}</p>
+{% endif %}
+
+<h3>{% if funcionario %}Editar{% else %}Crear{% endif %} Funcionario</h3>
+
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}  <!-- Renderiza el formulario -->
+
+    <button type="submit" class="btn btn-primary">
+        {% if funcionario %}
+            Actualizar Funcionario
+        {% else %}
+            Crear Funcionario
+        {% endif %}
+    </button>
+</form>
+
+{% if funcionario %}
+    <a href="{% url 'certificado:eliminar_datos' cedula=funcionario.cedula %}" class="btn btn-danger">Eliminar Funcionario</a>
+{% endif %}

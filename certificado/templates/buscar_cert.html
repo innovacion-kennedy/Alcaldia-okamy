@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}Buscar Certificado{% endblock %}
+{% block title %}Buscar Funcionario{% endblock %}
 
 {% block content %}
-<h1>Buscar Certificado</h1>
-<form method="POST" action="{% url 'buscar_certificado' %}">
+<h1>Buscar Funcionario</h1>
+<form method="POST">
+    {% csrf_token %}
     <div class="form-group">
         <label for="cedula">Cédula:</label>
         <input type="text" id="cedula" name="cedula" class="form-control">
@@ -13,6 +14,13 @@
         <label for="año">Año del Contrato:</label>
         <input type="text" id="año" name="año" class="form-control">
     </div>
-    <button type="submit" class="btn btn-primary">Buscar Certificado</button>
+    <button type="submit" class="btn btn-primary">Buscar</button>
 </form>
+
+{% if mensaje %}
+    <div class="alert alert-danger" role="alert">
+        {{ mensaje }}
+    </div>
+{% endif %}
+
 {% endblock %}

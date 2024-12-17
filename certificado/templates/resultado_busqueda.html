@@ -4,17 +4,16 @@
 
 {% block content %}
 <h1>Resultado de Búsqueda</h1>
-{% if usuario %}
+{% if funcionario %}
     <div class="alert alert-success" role="alert">
-        Usuario encontrado: {{ usuario.nombre }} (Cédula: {{ usuario.cedula }})<br>
-        <strong>Año del Contrato:</strong> {{ usuario.año_contrato }}<br>
-        <strong>Radicado:</strong> {{ usuario.radicado }}
+        Funcionario encontrado: {{ funcionario.nombre }} (Cédula: {{ funcionario.cedula }})<br>
+        <strong>Año del Contrato:</strong> {{ funcionario.año_contrato }}<br>
+        <strong>Radicado:</strong> {{ funcionario.radicado }}
     </div>
-    <a href="{{ url_for('obtener_certificado', cedula=usuario.cedula) }}" class="btn btn-primary">Crear Certificado</a>
+    <a href="{% url 'certificado:gestionar_funcionario' user_id=funcionario.usuario.id %}" class="btn btn-primary">Gestionar Funcionario</a>
 {% elif mensaje %}
     <div class="alert alert-danger" role="alert">
         {{ mensaje }}
     </div>
-    <a href="{{ url_for('crear_datos') }}" class="btn btn-primary">Crear Nuevo Usuario</a>
 {% endif %}
 {% endblock %}
