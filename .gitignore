@@ -1,1 +1,11 @@
-certificado/_pycache_/forms.cpython-39.pyc
+__pycache__/
+*.py[cod]
+*/migrations/
+venv/
+.env
+db.sqlite3
+staticfiles/
+media/
+.vscode/
+.idea/
+*.log
