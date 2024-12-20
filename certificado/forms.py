@@ -17,3 +17,8 @@ class RegistroForm(forms.ModelForm):
         fields = ['nombre', 'cedula', 'CPS', 'sitio_expedicion', 'objeto', 'obligaciones', 'vr_inicial_contrato', 
                   'valor_mensual_honorarios', 'fecha_suscripcion', 'fecha_inicio', 'fecha_terminacion', 
                   'tiempo_ejecucion_dia', 'año_contrato', 'radicado']  # No incluimos 'grupo' aquí ya que es gestionado por el campo adicional.
+        widgets = {
+            'fecha_suscripcion': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'fecha_inicio': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'fecha_terminacion': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+        }

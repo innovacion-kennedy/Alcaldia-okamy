@@ -91,8 +91,30 @@ def logout_view(request):
 def generar_certificado(request, cedula):
     funcionario = get_object_or_404(Funcionario, cedula=cedula)
 
-    rendered = render_to_string('certificado_template.html', {'funcionario': funcionario})
-    pdf = pdfkit.from_string(rendered, False)
+    options = {
+        'no-images': '',
+        'disable-smart-shrinking': '',
+        'load-error-handling': 'ignore',
+        'enable-local-file-access': ''
+    }
+
+    rendered = render_to_string('certificado_template.html', {
+        'nombre': funcionario.nombre,
+        'cedula': funcionario.cedula,
+        'sitio_expedicion': funcionario.sitio_expedicion,
+        'CPS': funcionario.CPS,
+        'objeto': funcionario.objeto,
+        'obligaciones': funcionario.obligaciones,
+        'vr_inicial_contrato': funcionario.vr_inicial_contrato,
+        'valor_mensual_honorarios': funcionario.valor_mensual_honorarios,
+        'fecha_inicio': funcionario.fecha_inicio,
+        'fecha_terminacion': funcionario.fecha_terminacion,
+        'fecha_suscripcion': funcionario.fecha_suscripcion,
+        'tiempo_ejecucion_dia': funcionario.tiempo_ejecucion_dia,
+        'año_contrato': funcionario.año_contrato,
+        'radicado': funcionario.radicado
+    })
+    pdf = pdfkit.from_string(rendered, False, options=options)
     
     response = HttpResponse(pdf, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="certificado_{cedula}.pdf"'
