@@ -10,25 +10,25 @@
     <p><strong>Nombre:</strong> {{ funcionario.nombre }}</p>
     <p><strong>Cédula:</strong> {{ funcionario.cedula }}</p>
     <p><strong>CPS:</strong> {{ funcionario.CPS }}</p>
-    <p><strong>Sitio de Expedición:</strong> {{ funcionario.sitio_expedicion }}</p>
-    <p><strong>Objeto:</strong> {{ funcionario.objeto }}</p>
-    <p><strong>Obligaciones:</strong> {{ funcionario.obligaciones }}</p>
-    <p><strong>Valor Inicial Contrato:</strong> {{ funcionario.vr_inicial_contrato }}</p>
-    <p><strong>Valor Mensual Honorarios:</strong> {{ funcionario.valor_mensual_honorarios }}</p>
-    <p><strong>Fecha Suscripción:</strong> {{ funcionario.fecha_suscripcion }}</p>
-    <p><strong>Fecha Inicio:</strong> {{ funcionario.fecha_inicio }}</p>
-    <p><strong>Fecha Terminación:</strong> {{ funcionario.fecha_terminacion }}</p>
-    <p><strong>Tiempo Ejecución:</strong> {{ funcionario.tiempo_ejecucion_dia }} días</p>
-    <p><strong>Año Contrato:</strong> {{ funcionario.año_contrato }}</p>
-    <p><strong>Radicado:</strong> {{ funcionario.radicado }}</p>
 {% endif %}
 
 <h3>{% if funcionario %}Editar{% else %}Crear{% endif %} Funcionario</h3>
 
 <form method="POST">
     {% csrf_token %}
+    
+    {% if not funcionario %}
+        <!-- Mostrar un campo para seleccionar un funcionario si no hay uno asociado -->
+        <label for="funcionario">Seleccionar Funcionario:</label>
+        <select name="funcionario" id="funcionario">
+            {% for f in funcionarios %}
+                <option value="{{ f.id }}" {% if f == funcionario %}selected{% endif %}>{{ f.nombre }} (Cédula: {{ f.cedula }})</option>
+            {% endfor %}
+        </select>
+    {% endif %}
+    
     {{ form.as_p }}  <!-- Renderiza el formulario -->
-
+    
     <button type="submit" class="btn btn-primary">
         {% if funcionario %}
             Actualizar Funcionario

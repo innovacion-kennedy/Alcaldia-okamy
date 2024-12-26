@@ -17,17 +17,11 @@
             <nav>
                 <ul class="nav">
                     <li class="nav-item"><a class="nav-link" href="{% url 'certificado:home' %}"><i class="fas fa-home"></i> Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'certificado:gestionar_funcionario' user_id=request.user.id %}"><i class="fas fa-user-cog"></i> Gestionar Funcionario</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'certificado:listar_cedulas' %}"><i class="fas fa-list"></i> Listar Cédulas</a></li>
                     <li class="nav-item"><a class="nav-link" href="#" onclick="eliminarDatos()"><i class="fas fa-user-times"></i> Eliminar Datos</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'certificado:register' %}"><i class="fas fa-user-plus"></i> Registrar</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'certificado:login_view' %}"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'certificado:logout_view' %}"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
                     <li class="nav-item"><a class="nav-link" href="#" onclick="generarCertificado()"><i class="fas fa-file-pdf"></i> Generar Certificado</a></li>
                     <li class="nav-item"><a class="nav-link" href="#" onclick="previewCertificado()"><i class="fas fa-eye"></i> Previsualizar Certificado</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'certificado:listar_cedulas' %}"><i class="fas fa-list"></i> Listar Cédulas</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'certificado:buscar_certificado' %}"><i class="fas fa-search"></i> Buscar Certificado</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'certificado:cargar_csv' %}"><i class="fas fa-upload"></i> Cargar CSV</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'certificado:descargar_csv' %}"><i class="fas fa-download"></i> Descargar CSV</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'certificado:buscar_certificado' %}"><i class="fas fa-search"></i> Buscar Certificado</a></li> <!-- Agregado -->
                 </ul>
             </nav>
         </div>

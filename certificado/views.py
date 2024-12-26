@@ -29,27 +29,34 @@ def login_view(request):
 @login_required
 def gestionar_funcionario(request, user_id):
     usuario = get_object_or_404(Usuario, id=user_id)
+    
+    # Obtener todos los funcionarios, en caso de que el usuario necesite seleccionar uno
+    funcionarios = Funcionario.objects.all()
+
     # Intentamos obtener el Funcionario asociado al usuario, si no existe, lo creamos.
     try:
         funcionario = usuario.funcionario  # Si ya existe el Funcionario
     except Funcionario.DoesNotExist:
         funcionario = None
 
-    # Si el método es POST, intentamos guardar el funcionario.
+    # Si el método es POST, intentamos gestionar el funcionario
     if request.method == 'POST':
-        form = RegistroForm(request.POST, instance=funcionario)
-        if form.is_valid():
-            nuevo_funcionario = form.save(commit=False)
-            nuevo_funcionario.usuario = usuario  # Asociamos el Funcionario al Usuario
-            nuevo_funcionario.save()  # Guardamos el Funcionario
-
-            # Redirigimos a la vista de generar certificado si es necesario
-            return redirect('certificado:generar_certificado', cedula=nuevo_funcionario.cedula)
+        if 'funcionario' in request.POST:
+            # Selección de un funcionario de la lista
+            funcionario_id = request.POST['funcionario']
+            funcionario = Funcionario.objects.get(id=funcionario_id)
+        else:
+            # Si no hay selección, se crea o edita el funcionario relacionado con el usuario
+            form = RegistroForm(request.POST, instance=funcionario)
+            if form.is_valid():
+                nuevo_funcionario = form.save(commit=False)
+                nuevo_funcionario.usuario = usuario  # Asociamos el Funcionario al Usuario
+                nuevo_funcionario.save()  # Guardamos el Funcionario
+                return redirect('certificado:generar_certificado', cedula=nuevo_funcionario.cedula)
     else:
         form = RegistroForm(instance=funcionario)
 
-    return render(request, 'gestionar_funcionario.html', {'form': form, 'usuario': usuario, 'funcionario': funcionario})
-
+    return render(request, 'gestionar_funcionario.html', {'form': form, 'usuario': usuario, 'funcionarios': funcionarios, 'funcionario': funcionario})
 
 @login_required
 def eliminar_datos(request, cedula):
@@ -112,7 +119,8 @@ def generar_certificado(request, cedula):
         'fecha_suscripcion': funcionario.fecha_suscripcion,
         'tiempo_ejecucion_dia': funcionario.tiempo_ejecucion_dia,
         'año_contrato': funcionario.año_contrato,
-        'radicado': funcionario.radicado
+        'radicado': funcionario.radicado,
+        'correo': funcionario.correo 
     })
     pdf = pdfkit.from_string(rendered, False, options=options)
     
@@ -130,10 +138,10 @@ def preview_certificado(request, cedula):
 def listar_cedulas(request):
     funcionarios = Funcionario.objects.all()
     datos_funcionarios = [
-        {'cedula': funcionario.cedula, 'nombre': funcionario.nombre, 'CPS': funcionario.CPS, 'año_contrato': funcionario.año_contrato} 
+        {'cedula': funcionario.cedula, 'nombre': funcionario.nombre, 'CPS': funcionario.CPS, 'año_contrato': funcionario.año_contrato, 'usuario': funcionario.usuario} 
         for funcionario in funcionarios
     ]
-    return render(request, 'listar_cedulas.html', {'datos_funcionarios': datos_funcionarios})
+    return render(request, 'listar_cedulas.html', {'datos_usuarios': datos_funcionarios})
 
 @login_required
 def eliminar_datos(request, cedula):
