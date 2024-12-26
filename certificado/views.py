@@ -4,7 +4,8 @@ from django.contrib.auth.decorators import login_required
 from .models import Usuario, Funcionario
 from .forms import RegistroForm
 from django.http import HttpResponse, JsonResponse
-import pdfkit
+#import pdfkit
+from weasyprint import HTML
 import csv
 from datetime import datetime
 from django.core.files.storage import default_storage
@@ -97,14 +98,6 @@ def logout_view(request):
 @login_required
 def generar_certificado(request, cedula):
     funcionario = get_object_or_404(Funcionario, cedula=cedula)
-
-    options = {
-        'no-images': '',
-        'disable-smart-shrinking': '',
-        'load-error-handling': 'ignore',
-        'enable-local-file-access': ''
-    }
-
     rendered = render_to_string('certificado_template.html', {
         'nombre': funcionario.nombre,
         'cedula': funcionario.cedula,
@@ -122,8 +115,7 @@ def generar_certificado(request, cedula):
         'radicado': funcionario.radicado,
         'correo': funcionario.correo 
     })
-    pdf = pdfkit.from_string(rendered, False, options=options)
-    
+    pdf = HTML(string=rendered, base_url=request.build_absolute_uri('/')).write_pdf()
     response = HttpResponse(pdf, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="certificado_{cedula}.pdf"'
     return response
