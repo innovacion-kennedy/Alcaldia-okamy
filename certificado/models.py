@@ -22,7 +22,7 @@ class Funcionario(models.Model):
     tiempo_ejecucion_dia = models.IntegerField()
     año_contrato = models.IntegerField()
     radicado = models.CharField(max_length=255)
-    correo = models.EmailField(max_length=255, unique=True)
+    correo = models.EmailField(max_length=255, unique=True, default='correo@ejemplo.com')
 
 class Radicado(models.Model):
     id = models.AutoField(primary_key=True)
