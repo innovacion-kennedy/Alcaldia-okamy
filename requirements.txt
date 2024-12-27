@@ -4,3 +4,6 @@ pdfkit
 reportlab
 django-jazzmin
 WeasyPrint
+python-docx
+beautifulsoup4
+html2text

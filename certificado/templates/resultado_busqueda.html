@@ -11,8 +11,10 @@
     <p><strong>CPS:</strong> {{ Funcionario.CPS }}</p>
     <p><strong>Año del Contrato:</strong> {{ Funcionario.año_contrato }}</p>
     
-    <!-- Botón para descargar el certificado -->
-    <a href="{% url 'certificado:generar_certificado' cedula=Funcionario.cedula %}" class="btn btn-success">Descargar Certificado</a>
+    <!-- Botón para descargar el certificado en PDF -->
+    <a href="{% url 'certificado:generar_certificado' cedula=Funcionario.cedula %}" class="btn btn-success">Descargar Certificado en PDF</a>
+    
+    
 {% else %}
     <div class="alert alert-warning" role="alert">
         No se ha encontrado el funcionario con los datos proporcionados.

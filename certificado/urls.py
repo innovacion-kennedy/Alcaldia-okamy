@@ -14,6 +14,6 @@ urlpatterns = [
     path('buscar_certificado/', views.buscar_certificado, name='buscar_certificado'),
     path('cargar_csv/', views.cargar_csv, name='cargar_csv'),
     path('descargar_csv/', views.descargar_csv, name='descargar_csv'),
-    path('login/', views.login_view, name='login_view'),  # Asegúrate de que esta línea esté presente
+    path('login/', views.login_view, name='login_view'),
     path('logout/', views.logout_view, name='logout_view'),
 ]

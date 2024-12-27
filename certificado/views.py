@@ -4,8 +4,9 @@ from django.contrib.auth.decorators import login_required
 from .models import Usuario, Funcionario
 from .forms import RegistroForm
 from django.http import HttpResponse, JsonResponse
-#import pdfkit
+from docx import Document
 from weasyprint import HTML
+from bs4 import BeautifulSoup
 import csv
 from datetime import datetime
 from django.core.files.storage import default_storage
@@ -95,6 +96,8 @@ def logout_view(request):
     logout(request)
     return redirect('login')
 
+
+
 @login_required
 def generar_certificado(request, cedula):
     funcionario = get_object_or_404(Funcionario, cedula=cedula)
@@ -119,6 +122,8 @@ def generar_certificado(request, cedula):
     response = HttpResponse(pdf, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="certificado_{cedula}.pdf"'
     return response
+
+
 
 @login_required
 def preview_certificado(request, cedula):
