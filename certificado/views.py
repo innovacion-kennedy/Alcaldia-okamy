@@ -116,7 +116,14 @@ def generar_certificado(request, cedula):
         'tiempo_ejecucion_dia': funcionario.tiempo_ejecucion_dia,
         'año_contrato': funcionario.año_contrato,
         'radicado': funcionario.radicado,
-        'correo': funcionario.correo 
+        'correo': funcionario.correo,
+        'fecha_terminacion_prorrogas': funcionario.fecha_terminacion_prorrogas,
+        'plazo_total_ejecucion': funcionario.plazo_total_ejecucion,
+        'cesion': funcionario.cesion,
+        'suspensiones': funcionario.suspensiones,
+        'estado': funcionario.estado
+        
+
     })
     pdf = HTML(string=rendered, base_url=request.build_absolute_uri('/')).write_pdf()
     response = HttpResponse(pdf, content_type='application/pdf')

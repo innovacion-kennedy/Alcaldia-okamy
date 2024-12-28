@@ -85,16 +85,8 @@
                     <td>{{ fecha_inicio }}</td>
                 </tr>
                 <tr>
-                    <th>Fecha de Terminación Inclullendo Prorrogas:</th>
+                    <th>Fecha de terminación incluyendo prorrogas:</th>
                     <td>{{ fecha_terminacion }}</td>
-                </tr>
-                <tr>
-                    <th>Fecha de Suscripción:</th>
-                    <td>{{ fecha_suscripcion }}</td>
-                </tr>
-                <tr>
-                    <th>F</th>
-                    <td>{{ fecha_suscripcion }}</td>
                 </tr>
                 <tr>
                     <th>Fecha de Suscripción:</th>
@@ -107,6 +99,35 @@
                 <tr>
                     <th>Año del Contrato:</th>
                     <td>{{ año_contrato }}</td>
+                </tr>
+                <tr>
+                    <th>Plazo Total de Ejecución:</th>
+                    <td>{{ plazo_total_ejecucion }}</td>
+                </tr>
+                <tr>
+                    <th>Cesión:</th>
+                    <td>
+                        {% if cesion %}
+                            <p>Cedente: {{ cesion.cedente }}</p>
+                            <p>Cesionario: {{ cesion.cesionario }}</p>
+                            <p>Fecha de Cesión: {{ cesion.fecha_cesion }}</p>
+                        {% else %}
+                            <p>N/A</p>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Suspensiones:</th>
+                    <td> {% if suspensiones %}
+                            <p> {{ suspensiones }}</p>
+                        {% else %}
+                            <p>N/A</p>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Estado:</th>
+                    <td>{{ estado }}</td>
                 </tr>
             </table>
         </div>
