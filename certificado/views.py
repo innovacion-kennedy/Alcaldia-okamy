@@ -1,37 +1,94 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
-from .models import Funcionario
+from .models import Usuario, Funcionario
 from .forms import RegistroForm
 from django.http import HttpResponse, JsonResponse
-import pdfkit
-from io import BytesIO
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
+from docx import Document
+from weasyprint import HTML
+from bs4 import BeautifulSoup
 import csv
 from datetime import datetime
 from django.core.files.storage import default_storage
 from django.template.loader import render_to_string
 
+@login_required
+def home(request):
+    return render(request, 'home.html')
+
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('home')
+        else:
+            return render(request, 'registration/login.html', {'error': 'Invalid credentials'})
+    return render(request, 'registration/login.html')
+
+@login_required
+def gestionar_funcionario(request, user_id):
+    usuario = get_object_or_404(Usuario, id=user_id)
+    
+    # Obtener todos los funcionarios, en caso de que el usuario necesite seleccionar uno
+    funcionarios = Funcionario.objects.all()
+
+    # Intentamos obtener el Funcionario asociado al usuario, si no existe, lo creamos.
+    try:
+        funcionario = usuario.funcionario  # Si ya existe el Funcionario
+    except Funcionario.DoesNotExist:
+        funcionario = None
+
+    # Si el método es POST, intentamos gestionar el funcionario
+    if request.method == 'POST':
+        if 'funcionario' in request.POST:
+            # Selección de un funcionario de la lista
+            funcionario_id = request.POST['funcionario']
+            funcionario = Funcionario.objects.get(id=funcionario_id)
+        else:
+            # Si no hay selección, se crea o edita el funcionario relacionado con el usuario
+            form = RegistroForm(request.POST, instance=funcionario)
+            if form.is_valid():
+                nuevo_funcionario = form.save(commit=False)
+                nuevo_funcionario.usuario = usuario  # Asociamos el Funcionario al Usuario
+                nuevo_funcionario.save()  # Guardamos el Funcionario
+                return redirect('certificado:generar_certificado', cedula=nuevo_funcionario.cedula)
+    else:
+        form = RegistroForm(instance=funcionario)
+
+    return render(request, 'gestionar_funcionario.html', {'form': form, 'usuario': usuario, 'funcionarios': funcionarios, 'funcionario': funcionario})
+
+@login_required
+def eliminar_datos(request, cedula):
+    funcionario = get_object_or_404(Funcionario, cedula=cedula)
+    funcionario.delete()  
+    return redirect('certificado:listar_cedulas')  
+
+@login_required
 def register(request):
     if request.method == 'POST':
         form = RegistroForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect('home')
+            user = form.save()  # Crea el usuario
+            login(request, user)  # Autentica al usuario
+            return redirect('certificado:buscar_certificado')  # Redirige a la vista de búsqueda
     else:
         form = RegistroForm()
     return render(request, 'register.html', {'form': form})
 
+@login_required
 def login_view(request):
     if request.method == 'POST':
         cedula = request.POST['cedula']
         password = request.POST['password']
         user = authenticate(request, username=cedula, password=password)
-        if user is not None:
+        if user:
             login(request, user)
             return redirect('home')
+        else:
+            return render(request, 'login.html', {'error': 'Credenciales incorrectas'})
     return render(request, 'login.html')
 
 @login_required
@@ -39,152 +96,81 @@ def logout_view(request):
     logout(request)
     return redirect('login')
 
-@login_required
-def home(request):
-    return render(request, 'home.html')
+
 
 @login_required
 def generar_certificado(request, cedula):
-    Funcionario = Funcionario.objects.get(cedula=cedula)
+    funcionario = get_object_or_404(Funcionario, cedula=cedula)
     rendered = render_to_string('certificado_template.html', {
-        'nombre': Funcionario.nombre,
-        'cedula': Funcionario.cedula,
-        'CPS': Funcionario.CPS,
-        'sitio_expedicion': Funcionario.sitio_expedicion,
-        'objeto': Funcionario.objeto,
-        'obligaciones': Funcionario.obligaciones,
-        'vr_inicial_contrato': Funcionario.vr_inicial_contrato,
-        'valor_mensual_honorarios': Funcionario.valor_mensual_honorarios,
-        'fecha_suscripcion': Funcionario.fecha_suscripcion,
-        'fecha_inicio': Funcionario.fecha_inicio,
-        'fecha_terminacion': Funcionario.fecha_terminacion,
-        'tiempo_ejecucion_dia': Funcionario.tiempo_ejecucion_dia,
-        'radicado': Funcionario.radicado,
-        'año_contrato': Funcionario.año_contrato
+        'nombre': funcionario.nombre,
+        'cedula': funcionario.cedula,
+        'sitio_expedicion': funcionario.sitio_expedicion,
+        'CPS': funcionario.CPS,
+        'objeto': funcionario.objeto,
+        'obligaciones': funcionario.obligaciones,
+        'vr_inicial_contrato': funcionario.vr_inicial_contrato,
+        'valor_mensual_honorarios': funcionario.valor_mensual_honorarios,
+        'fecha_inicio': funcionario.fecha_inicio,
+        'fecha_terminacion': funcionario.fecha_terminacion,
+        'fecha_suscripcion': funcionario.fecha_suscripcion,
+        'tiempo_ejecucion_dia': funcionario.tiempo_ejecucion_dia,
+        'año_contrato': funcionario.año_contrato,
+        'radicado': funcionario.radicado,
+        'correo': funcionario.correo,
+        'fecha_terminacion_prorrogas': funcionario.fecha_terminacion_prorrogas,
+        'plazo_total_ejecucion': funcionario.plazo_total_ejecucion,
+        'cesion': funcionario.cesion,
+        'suspensiones': funcionario.suspensiones,
+        'estado': funcionario.estado
+        
+
     })
-    pdf = pdfkit.from_string(rendered, False)
+    pdf = HTML(string=rendered, base_url=request.build_absolute_uri('/')).write_pdf()
     response = HttpResponse(pdf, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="certificado_{cedula}.pdf"'
     return response
 
-@login_required
-def obtener_certificado(request, cedula):
-    Funcionario = Funcionario.objects.get(cedula=cedula)
-    if Funcionario:
-        archivo_pdf = generar_certificado(request, cedula)
-        return archivo_pdf
-    else:
-        return JsonResponse({'mensaje': 'Funcionario no encontrado'}, status=404)
+
 
 @login_required
 def preview_certificado(request, cedula):
-    Funcionario = Funcionario.objects.get(cedula=cedula)
-    if Funcionario:
-        return render(request, 'certificado_template.html', {
-            'nombre': Funcionario.nombre,
-            'cedula': Funcionario.cedula,
-            'CPS': Funcionario.CPS,
-            'sitio_expedicion': Funcionario.sitio_expedicion,
-            'objeto': Funcionario.objeto,
-            'obligaciones': Funcionario.obligaciones,
-            'vr_inicial_contrato': Funcionario.vr_inicial_contrato,
-            'valor_mensual_honorarios': Funcionario.valor_mensual_honorarios,
-            'fecha_suscripcion': Funcionario.fecha_suscripcion,
-            'fecha_inicio': Funcionario.fecha_inicio,
-            'fecha_terminacion': Funcionario.fecha_terminacion,
-            'tiempo_ejecucion_dia': Funcionario.tiempo_ejecucion_dia,
-            'radicado': "123456",  # Ejemplo de radicado
-            'año_contrato': Funcionario.año_contrato
-        })
-    else:
-        return JsonResponse({'mensaje': 'Funcionario no encontrado'}, status=404)
-
-@login_required
-def crear_datos(request):
-    if request.method == 'POST':
-        nombre = request.POST['nombre']
-        cedula = request.POST['cedula']
-        CPS = request.POST['CPS']
-        sitio_expedicion = request.POST['sitio_expedicion']
-        objeto = request.POST['objeto']
-        obligaciones = request.POST['obligaciones']
-        vr_inicial_contrato = request.POST['vr_inicial_contrato']
-        valor_mensual_honorarios = request.POST['valor_mensual_honorarios']
-        fecha_suscripcion = datetime.strptime(request.POST['fecha_suscripcion'], '%Y-%m-%d').date()
-        fecha_inicio = datetime.strptime(request.POST['fecha_inicio'], '%Y-%m-%d').date()
-        fecha_terminacion = datetime.strptime(request.POST['fecha_terminacion'], '%Y-%m-%d').date()
-        tiempo_ejecucion_dia = request.POST['tiempo_ejecucion_dia']
-        año_contrato = fecha_suscripcion.year
-
-        Funcionario_existente = Funcionario.objects.filter(cedula=cedula).first()
-        if Funcionario_existente:
-            return JsonResponse({'mensaje': 'La cédula ya está en uso. Por favor, usa una cédula diferente.'}, status=400)
-
-        nuevo_Funcionario = Funcionario(
-            nombre=nombre,
-            cedula=cedula,
-            CPS=CPS,
-            sitio_expedicion=sitio_expedicion,
-            objeto=objeto,
-            obligaciones=obligaciones,
-            vr_inicial_contrato=vr_inicial_contrato,
-            valor_mensual_honorarios=valor_mensual_honorarios,
-            fecha_suscripcion=fecha_suscripcion,
-            fecha_inicio=fecha_inicio,
-            fecha_terminacion=fecha_terminacion,
-            tiempo_ejecucion_dia=tiempo_ejecucion_dia,
-            año_contrato=año_contrato
-        )
-        nuevo_Funcionario.save()
-        return redirect('buscar_certificado')
-
-    return render(request, 'crear_datos.html')
+    funcionario = get_object_or_404(Funcionario, cedula=cedula)
+    
+    return render(request, 'certificado_template.html', {'funcionario': funcionario})
 
 @login_required
 def listar_cedulas(request):
-    Funcionarios = Funcionario.objects.all()
-    datos_Funcionarios = [{'cedula': Funcionario.cedula, 'nombre': Funcionario.nombre, 'CPS': Funcionario.CPS, 'año_contrato': Funcionario.año_contrato} for Funcionario in Funcionarios]
-    return render(request, 'listar_cedulas.html', {'datos_Funcionarios': datos_Funcionarios})
-
-@login_required
-def editar_datos(request, cedula):
-    Funcionario = Funcionario.objects.get(cedula=cedula)
-    if request.method == 'POST':
-        Funcionario.nombre = request.POST['nombre']
-        Funcionario.CPS = request.POST['CPS']
-        Funcionario.sitio_expedicion = request.POST['sitio_expedicion']
-        Funcionario.objeto = request.POST['objeto']
-        Funcionario.obligaciones = request.POST['obligaciones']
-        Funcionario.vr_inicial_contrato = request.POST['vr_inicial_contrato']
-        Funcionario.valor_mensual_honorarios = request.POST['valor_mensual_honorarios']
-        Funcionario.fecha_suscripcion = datetime.strptime(request.POST['fecha_suscripcion'], '%Y-%m-%d').date()
-        Funcionario.fecha_inicio = datetime.strptime(request.POST['fecha_inicio'], '%Y-%m-%d').date()
-        Funcionario.fecha_terminacion = datetime.strptime(request.POST['fecha_terminacion'], '%Y-%m-%d').date()
-        Funcionario.tiempo_ejecucion_dia = request.POST['tiempo_ejecucion_dia']
-        Funcionario.año_contrato = Funcionario.fecha_suscripcion.year
-        Funcionario.radicado = request.POST['radicado']
-        Funcionario.save()
-        return redirect('buscar_certificado')
-
-    return render(request, 'editar_datos.html', {'Funcionario': Funcionario})
+    funcionarios = Funcionario.objects.all()
+    datos_funcionarios = [
+        {'cedula': funcionario.cedula, 'nombre': funcionario.nombre, 'CPS': funcionario.CPS, 'año_contrato': funcionario.año_contrato, 'usuario': funcionario.usuario} 
+        for funcionario in funcionarios
+    ]
+    return render(request, 'listar_cedulas.html', {'datos_usuarios': datos_funcionarios})
 
 @login_required
 def eliminar_datos(request, cedula):
-    Funcionario = Funcionario.objects.get(cedula=cedula)
-    if Funcionario:
-        Funcionario.delete()
-    return redirect('buscar_certificado')
+    funcionario = get_object_or_404(Funcionario, cedula=cedula)
+    funcionario.delete()
+    return redirect('listar_cedulas')
 
 @login_required
 def buscar_certificado(request):
     if request.method == 'POST':
-        cedula = request.POST.get('cedula')
-        año = request.POST.get('año')
-        Funcionario = Funcionario.objects.filter(cedula=cedula, año_contrato=año).first()
-        if Funcionario:
-            return render(request, 'resultado_busqueda.html', {'Funcionario': Funcionario})
+        cedula = request.POST.get('cedula', '').strip()  # Asegúrate de manejar entradas vacías
+        año = request.POST.get('año', '').strip()
+
+        # Valida que los campos no estén vacíos
+        if not cedula or not año:
+            return render(request, 'resultado_busqueda.html', {'mensaje': 'Por favor, completa todos los campos.'})
+
+        # Buscar el funcionario por cédula y año del contrato
+        Funcionario_obj = Funcionario.objects.filter(cedula=cedula, año_contrato=año).first()
+
+        if Funcionario_obj:
+            return render(request, 'resultado_busqueda.html', {'Funcionario': Funcionario_obj})
         else:
             return render(request, 'resultado_busqueda.html', {'mensaje': 'Funcionario no encontrado. Por favor, crea un nuevo Funcionario.'})
+
     return render(request, 'buscar_cert.html')
 
 @login_required
@@ -194,13 +180,35 @@ def cargar_csv(request):
             return JsonResponse({'mensaje': 'No se ha subido ningún archivo'}, status=400)
         
         file = request.FILES['file']
-        if file.name.endswith('.csv'):
-            file_path = default_storage.save(file.name, file)
+        
+        if not file.name.endswith('.csv'):
+            return JsonResponse({'mensaje': 'El archivo debe ser un CSV'}, status=400)
+
+        file_path = default_storage.save(file.name, file)
+
+        try:
             with open(file_path, 'r') as f:
                 reader = csv.reader(f)
+                header = next(reader)  # Omitir encabezado
+                
+                registros_creados = 0
+                registros_actualizados = 0
+
                 for row in reader:
+                    if len(row) != 13:
+                        continue  # O manejar el caso de columnas faltantes
+
+                    # Desestructuración de la fila
                     nombre, cedula, CPS, sitio_expedicion, objeto, obligaciones, vr_inicial_contrato, valor_mensual_honorarios, fecha_suscripcion, fecha_inicio, fecha_terminacion, tiempo_ejecucion_dia, año_contrato = row
-                    Funcionario.objects.update_or_create(
+
+                    try:
+                        fecha_suscripcion = datetime.strptime(fecha_suscripcion, '%Y-%m-%d').date()
+                        fecha_inicio = datetime.strptime(fecha_inicio, '%Y-%m-%d').date()
+                        fecha_terminacion = datetime.strptime(fecha_terminacion, '%Y-%m-%d').date()
+                    except ValueError:
+                        continue  # Ignorar filas con fechas mal formateadas
+
+                    funcionario, creado = Funcionario.objects.update_or_create(
                         cedula=cedula,
                         defaults={
                             'nombre': nombre,
@@ -210,25 +218,58 @@ def cargar_csv(request):
                             'obligaciones': obligaciones,
                             'vr_inicial_contrato': vr_inicial_contrato,
                             'valor_mensual_honorarios': valor_mensual_honorarios,
-                            'fecha_suscripcion': datetime.strptime(fecha_suscripcion, '%Y-%m-%d').date(),
-                            'fecha_inicio': datetime.strptime(fecha_inicio, '%Y-%m-%d').date(),
-                            'fecha_terminacion': datetime.strptime(fecha_terminacion, '%Y-%m-%d').date(),
+                            'fecha_suscripcion': fecha_suscripcion,
+                            'fecha_inicio': fecha_inicio,
+                            'fecha_terminacion': fecha_terminacion,
                             'tiempo_ejecucion_dia': tiempo_ejecucion_dia,
                             'año_contrato': año_contrato
                         }
                     )
-            return redirect('listar_cedulas')
-        else:
-            return JsonResponse({'mensaje': 'El archivo debe ser un CSV'}, status=400)
+
+                    if creado:
+                        registros_creados += 1
+                    else:
+                        registros_actualizados += 1
+
+            return JsonResponse({
+                'mensaje': f'{registros_creados} registros creados, {registros_actualizados} actualizados.'
+            })
+
+        except Exception as e:
+            return JsonResponse({'mensaje': f'Error al procesar el archivo: {str(e)}'}, status=500)
+
     return render(request, 'cargar_csv.html')
 
 @login_required
 def descargar_csv(request):
-    Funcionarios = Funcionario.objects.all()
+    funcionarios = Funcionario.objects.all()
+
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="Funcionarios.csv"'
-    writer = csv.writer(response)
-    writer.writerow(['nombre', 'cedula', 'CPS', 'sitio_expedicion', 'objeto', 'obligaciones', 'vr_inicial_contrato', 'valor_mensual_honorarios', 'fecha_suscripcion', 'fecha_inicio', 'fecha_terminacion', 'tiempo_ejecucion_dia', 'año_contrato'])
-    for Funcionario in Funcionarios:
-        writer.writerow([Funcionario.nombre, Funcionario.cedula, Funcionario.CPS, Funcionario.sitio_expedicion, Funcionario.objeto, Funcionario.obligaciones, Funcionario.vr_inicial_contrato, Funcionario.valor_mensual_honorarios, Funcionario.fecha_suscripcion, Funcionario.fecha_inicio, Funcionario.fecha_terminacion, Funcionario.tiempo_ejecucion_dia, Funcionario.año_contrato])
+    response['Content-Encoding'] = 'utf-8'
+
+    writer = csv.DictWriter(response, fieldnames=[
+        'nombre', 'cedula', 'CPS', 'sitio_expedicion', 'objeto', 'obligaciones',
+        'vr_inicial_contrato', 'valor_mensual_honorarios', 'fecha_suscripcion',
+        'fecha_inicio', 'fecha_terminacion', 'tiempo_ejecucion_dia', 'año_contrato'
+    ])
+    writer.writeheader()
+
+    for funcionario in funcionarios:
+        writer.writerow({
+            'nombre': funcionario.nombre,
+            'cedula': funcionario.cedula,
+            'CPS': funcionario.CPS,
+            'sitio_expedicion': funcionario.sitio_expedicion,
+            'objeto': funcionario.objeto,
+            'obligaciones': funcionario.obligaciones,
+            'vr_inicial_contrato': funcionario.vr_inicial_contrato,
+            'valor_mensual_honorarios': funcionario.valor_mensual_honorarios,
+            'fecha_suscripcion': funcionario.fecha_suscripcion.strftime('%Y-%m-%d'),
+            'fecha_inicio': funcionario.fecha_inicio.strftime('%Y-%m-%d'),
+            'fecha_terminacion': funcionario.fecha_terminacion.strftime('%Y-%m-%d'),
+            'tiempo_ejecucion_dia': funcionario.tiempo_ejecucion_dia,
+            'año_contrato': funcionario.año_contrato
+        })
+
     return response
